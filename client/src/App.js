@@ -1,114 +1,215 @@
-import { useEffect, useState } from "react";
-import SelectRegion from "./components/SelectRegion";
+import { useCallback, useEffect, useState } from "react";
+import RegionInput from "./components/RegionInput";
 import UserTable from "./components/UserTable";
+import { generateRandomSeed, generateUsersData } from "./http/userDataAPI";
+import RangeInput from "./components/RangeInput";
 
 function App() {
-    const [numberValue, setNumberValue] = useState(1000);
+    const [errorCount, setErrorCount] = useState(0);
     const [sliderValue, setSliderValue] = useState(0);
+    const [seedValue, setSeedValue] = useState(0);
+    const [validateErrorCount, setValidateErrorCount] = useState(false);
+    const [selectedRegion, setSelectedRegion] = useState("EN");
+    const [table, setTable] = useState([]);
+    const [mouseUp, setMouseUp] = useState(false);
+    const [countUsers, setCountUsers] = useState(20);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        if (numberValue > 10) {
-            setSliderValue(10);
-        } else {
-            setSliderValue(numberValue);
-        }
-    }, []);
+    const handleSelectedRegion = (region) => {
+        setSelectedRegion(region);
+    };
 
     const handleInputChange = (e) => {
-        const value = parseFloat(e.target.value);
-        setNumberValue(value);
+        let value = e.target.value;
 
-        if (value > 10) {
-            setSliderValue(10);
-        } else {
-            setSliderValue(value);
+        if (value === "") {
+            setErrorCount("");
+            return;
         }
+
+        value = value.replace(",", ".");
+
+        const numberValue = parseFloat(value);
+
+        if (!isNaN(numberValue)) {
+            setErrorCount(numberValue);
+            if (value > 10) {
+                setSliderValue(10);
+            } else {
+                setSliderValue(numberValue);
+            }
+        }
+
+        numberValue > 1000 ? setValidateErrorCount(true) : setValidateErrorCount(false);
     };
 
     const handleSliderChange = (e) => {
+        setValidateErrorCount(false);
         const value = parseFloat(e.target.value);
         setSliderValue(value);
-        setNumberValue(value);
+        setErrorCount(value);
     };
+
+    const handleMouseUp = () => {
+        setMouseUp(!mouseUp);
+    };
+
+    const handleSeedChange = async () => {
+        try {
+            const response = await generateRandomSeed();
+            setSeedValue(response);
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const handleInputSeed = (e) => {
+        setSeedValue(e.target.value);
+    };
+
+    // const fetchWithDebounce = useCallback(() => {
+    //     if (isLoading) return;
+
+    //     setIsLoading(true);
+
+    //     let timerId;
+
+    //     return () => {
+    //         // Очистить предыдущий таймер
+    //         if (timerId) {
+    //             clearTimeout(timerId);
+    //         }
+
+    //         // Запустить таймер с задержкой 1 секунда
+    //         timerId = setTimeout(async () => {
+    //             try {
+    //                 const response = await generateUsersData(
+    //                     selectedRegion,
+    //                     countUsers,
+    //                     errorCount,
+    //                     seedValue,
+    //                     currentPage
+    //                 );
+
+    //                 setTable((prevTable) => [...prevTable, ...response.usersData]);
+    //                 setCountUsers(10);
+    //                 setCurrentPage((prev) => prev + 1);
+    //             } catch (e) {
+    //                 console.log(e);
+    //             } finally {
+    //                 setIsLoading(false); // Снимаем состояние загрузки
+    //             }
+    //         }, 1000); // 1 секунда задержки
+    //     };
+    // }, [selectedRegion, errorCount, mouseUp, seedValue]);
+
+    useEffect(() => {
+        generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
+            .then((response) => {
+                setTable((prevTable) => [...prevTable, ...response.usersData]);
+                setCountUsers(10);
+                setCurrentPage((prev) => prev + 1);
+                // console.log(currentPage, "setCurrentPage");
+            })
+            .catch((e) => console.log(e))
+            .finally(() => setIsLoading(false));
+    }, [isLoading]);
+
+    useEffect(() => {
+        generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
+            .then((response) => {
+                setTable(response.usersData);
+                setCountUsers(10);
+                setCurrentPage((prev) => prev + 1);
+            })
+            .catch((e) => console.log(e));
+    }, [selectedRegion, errorCount, mouseUp, seedValue]);
+
+    const handleScroll = (e) => {
+        if (
+            e.target.documentElement.scrollHeight -
+                (e.target.documentElement.scrollTop + window.innerHeight) <
+            100
+        ) {
+            // setFetching(true);
+            setIsLoading(true);
+        }
+    };
+
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
 
     return (
         <div className="container mx-auto mt-10 w-full">
-            <div className="mt-5 h-full w-full ">
-                <div>
-                    <SelectRegion />
-                </div>
-                <div className="mt-5 text-center w-full">
-                    <form className="">
+            <div>
+                <div className="flex content-between gap-20 justify-center w-full">
+                    <RegionInput handleSelectedRegion={handleSelectedRegion} />
+
+                    <div>
+                        <label
+                            htmlFor="text-input"
+                            className="block mb-2 text-sm font-medium text-gray-900">
+                            Enter the number of errors:
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                className={
+                                    validateErrorCount
+                                        ? "bg-red-300 border border-red-300 text-gray-900 text-sm rounded-lg focus:bg-red-100 focus:ring-red-500 focus:border-red-100 block w-full p-2.5"
+                                        : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                }
+                                placeholder="< 1000"
+                                value={errorCount}
+                                onChange={handleInputChange}
+                            />
+                            <i className="absolute right-2 top-0 text-gray-400 text-xs text-left">
+                                per record
+                            </i>
+                        </div>
+                    </div>
+                    <div>
                         <label
                             htmlFor="number-input"
-                            className="block mb-2 text-sm font-medium text-gray-900 ">
-                            Select a number:
+                            className=" block mb-2 text-sm font-medium text-gray-900">
+                            Seed:
                         </label>
-                        <input
-                            type="number"
-                            id="number-input"
-                            aria-describedby="helper-text-explanation"
-                            className="mx-auto  max-w-36 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400  dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            placeholder="1000"
-                            min="0"
-                            max="1000"
-                            value={numberValue}
-                            onChange={(e) => handleInputChange(e)}
-                        />
-                    </form>
-                </div>
-                <div className="w-2/3 my-5 text-center mx-auto">
-                    <div className="relative mb-6">
-                        <label className="block mb-2 text-sm font-medium text-gray-900 ">
-                            or use the range below:
-                        </label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="10"
-                            step="0.25"
-                            value={sliderValue}
-                            onChange={(e) => handleSliderChange(e)}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
-
-                        <span className="ml-2 text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-0 -bottom-6">
-                            0
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[10%] -bottom-6">
-                            1
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[20%] -bottom-6">
-                            2
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[30%] -bottom-6">
-                            3
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[40%] -bottom-6">
-                            4
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[50%] -bottom-6">
-                            5
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[60%] -bottom-6">
-                            6
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[70%] -bottom-6">
-                            7
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[80%] -bottom-6">
-                            8
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute start-[90%] -bottom-6">
-                            9
-                        </span>
-                        <span className="text-sm text-gray-500 -translate-x-1/2 rtl:translate-x-1/2 absolute end-0 -bottom-6">
-                            10
-                        </span>
+                        <div className="flex gap-3 w-full">
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    className=" w-48 mb-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                                    placeholder="1000"
+                                    value={seedValue}
+                                    onChange={(e) => handleInputSeed(e)}
+                                />
+                                <i className="absolute right-2 top-0 text-gray-400 text-xs text-left">
+                                    per record
+                                </i>
+                            </div>
+                            <button
+                                type="button"
+                                className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100"
+                                onClick={handleSeedChange}>
+                                Random
+                            </button>
+                        </div>
                     </div>
                 </div>
+                <RangeInput
+                    sliderValue={sliderValue}
+                    handleSliderChange={handleSliderChange}
+                    handleMouseUp={handleMouseUp}
+                />
             </div>
-            <UserTable />
+
+            <UserTable table={table} />
         </div>
     );
 }

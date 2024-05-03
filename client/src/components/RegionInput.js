@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const SelectRegion = () => {
+const RegionInput = ({ handleSelectedRegion }) => {
     const countries = [
         {
             name: "USA",
@@ -80,14 +80,28 @@ const SelectRegion = () => {
     const [selectedCountry, setSelectedCountry] = useState(countries[0]);
     const [isOpen, setIsOpen] = useState(false);
 
-    const handleSelectCountry = (country) => {
+    const formattedRegion = (name) => {
+        switch (name) {
+            case "USA":
+                return "EN";
+            case "Germany":
+                return "DE";
+            case "Italy":
+                return "IT";
+            case "Poland":
+                return "PL";
+        }
+    };
+
+    const handleRegion = (country) => {
         setSelectedCountry(country);
+        handleSelectedRegion(formattedRegion(country.name));
+
         setIsOpen(false);
     };
-    // console.log(selectedCountry);
 
     return (
-        <form className="max-w-sm mx-auto text-center">
+        <div className="text-center">
             <label className="block mb-2 text-sm font-medium text-gray-900 ">
                 Select a country:
             </label>
@@ -126,9 +140,7 @@ const SelectRegion = () => {
                         <ul className="py-2 text-sm text-gray-700" aria-labelledby="states-button">
                             {countries.map((country) => {
                                 return (
-                                    <li
-                                        key={country.name}
-                                        onClick={() => handleSelectCountry(country)}>
+                                    <li key={country.name} onClick={() => handleRegion(country)}>
                                         <button
                                             type="button"
                                             className="inline-flex w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -144,8 +156,8 @@ const SelectRegion = () => {
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
     );
 };
 
-export default SelectRegion;
+export default RegionInput;
