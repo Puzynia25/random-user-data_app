@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { Context } from "..";
+import { observer } from "mobx-react-lite";
 
-const RegionInput = ({ handleSelectedRegion }) => {
+const RegionInput = observer(() => {
+    const { user } = useContext(Context);
+
     const countries = [
         {
             name: "USA",
@@ -95,8 +99,7 @@ const RegionInput = ({ handleSelectedRegion }) => {
 
     const handleRegion = (country) => {
         setSelectedCountry(country);
-        handleSelectedRegion(formattedRegion(country.name));
-
+        user.setSelectedRegion(formattedRegion(country.name));
         setIsOpen(false);
     };
 
@@ -158,6 +161,6 @@ const RegionInput = ({ handleSelectedRegion }) => {
             </div>
         </div>
     );
-};
+});
 
 export default RegionInput;

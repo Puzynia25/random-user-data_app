@@ -1,4 +1,12 @@
-const { fakerPL, fakerDE, fakerEN_US, fakerIT } = require("@faker-js/faker");
+const {
+    fakerPL,
+    fakerDE,
+    fakerEN_US,
+    fakerIT,
+    fakerEN_AU,
+    fakerEN_GB,
+    fakerEN_CA,
+} = require("@faker-js/faker");
 const ApiError = require("../error/ApiError");
 const seedrandom = require("seedrandom");
 const winston = require("winston");
@@ -12,8 +20,6 @@ class userDataController {
 
     generateUsersData(req, res) {
         const { region, countUsers, errorCount, seed, page } = req.body;
-
-        //winston.log("info", typeof (countUsers, errorCount, seed, page) === "number");
 
         if (
             typeof region !== "string" ||
@@ -29,7 +35,7 @@ class userDataController {
                 address: generateAddress(faker, 0),
                 phoneNumber: generatePhoneNumber(faker, 0),
             };
-
+            currentUser++;
             return getUserWithErrors(user);
         }
 
@@ -68,9 +74,19 @@ class userDataController {
         }
 
         function generateAddress(faker) {
+            const rng = seedrandom(`${seed}-${page}-${currentUser}`);
+            const random = Math.floor(rng() * 2);
+
             let address = "";
 
-            address = `${faker.location.city()}, ${faker.location.streetAddress()}, Building ${faker.location.buildingNumber()}, Apartment ${faker.location.secondaryAddress()}`;
+            switch (random) {
+                case 0:
+                    address = `${faker.location.city()}, ${faker.location.streetAddress()}, Building ${faker.location.buildingNumber()}, Apartment ${faker.location.secondaryAddress()}`;
+                    break;
+                case 1:
+                    address = `${faker.location.county()}, ${faker.location.city()}, ${faker.location.streetAddress()}, House ${faker.location.buildingNumber()}}`;
+                    break;
+            }
 
             address += `, ZIP Code ${faker.location.zipCode()}`;
 
@@ -184,6 +200,8 @@ class userDataController {
         const faker = getFakerForRegion(region);
 
         faker.seed(seed + page);
+
+        let currentUser = 0;
 
         const usersData = faker.helpers.multiple(createRandomUser, {
             count: countUsers,

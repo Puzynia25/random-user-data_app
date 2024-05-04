@@ -1,14 +1,92 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { Context } from "..";
+import { generateUsersData } from "../http/userDataAPI";
+import { observer } from "mobx-react-lite";
+import {
+    DELAY_UPDATE_USERS,
+    INITIAL_COUNT_USERS,
+    INITIAL_PAGE,
+    OFFSET_COUNT_USERS,
+} from "../utils.js/consts";
 
-const UserTable = ({ table }) => {
-    const [loading, setLoading] = useState(true);
+const UserTable = observer(() => {
+    const { user } = useContext(Context);
 
-    // useEffect(() => {
-    //     setUserTable(table);
-    //     if (table) {
-    //         setLoading(false);
-    //     }
-    // }, [table]);
+    const [timerId, setTimerId] = useState(null);
+    const [isNewRequest, setIsNewRequest] = useState(false);
+
+    const fetchData = async (region, countUsers, errorCount, seed, page, callback = null) => {
+        return generateUsersData(region, countUsers, errorCount, seed, page)
+            .then((response) => {
+                user.setUserTable(response.usersData);
+                user.setCountUsers(OFFSET_COUNT_USERS);
+                user.incrementCurrentPage();
+            })
+            .catch((e) => console.log(e))
+            .finally(callback);
+    };
+
+    const delayUpdateData = async () => {
+        if (timerId) {
+            clearTimeout(timerId);
+        }
+
+        const timer = () => {
+            return setTimeout(async () => {
+                setTimerId(null);
+                if (isNewRequest) {
+                    fetchData(
+                        user.selectedRegion,
+                        INITIAL_COUNT_USERS,
+                        user.errorValue,
+                        user.seedValue,
+                        INITIAL_PAGE,
+                        () => setIsNewRequest(false)
+                    );
+                }
+            }, DELAY_UPDATE_USERS);
+        };
+
+        setTimerId(timer());
+    };
+
+    useEffect(() => {
+        if (user.isFetching) {
+            generateUsersData(
+                user.selectedRegion,
+                user.countUsers,
+                user.errorValue,
+                user.seedValue,
+                user.currentPage
+            )
+                .then((response) => {
+                    user.addUsers(response.usersData);
+                    user.incrementCurrentPage();
+                })
+                .catch((e) => console.log(e))
+                .finally(() => {
+                    user.setIsFetching(false);
+                });
+        }
+    }, [user.isFetching]);
+
+    useEffect(() => {
+        if (timerId) {
+            setIsNewRequest(true);
+            delayUpdateData();
+            return;
+        }
+
+        delayUpdateData();
+        fetchData(
+            user.selectedRegion,
+            INITIAL_COUNT_USERS,
+            user.errorValue,
+            user.seedValue,
+            INITIAL_PAGE
+        );
+    }, [user.selectedRegion, user.errorValue, user.seedValue]);
+
     return (
         <div className="relative overflow-x-auto mt-16  mx-auto">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 ">
@@ -32,18 +110,18 @@ const UserTable = ({ table }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {table?.map((user, i) => {
+                    {user.userTable.map((row, i) => {
                         return (
-                            <tr key={user.userId} className="bg-white border-b">
+                            <tr key={row.userId} className="bg-white border-b">
                                 <th
                                     scope="row"
                                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                     {i + 1}
                                 </th>
-                                <td className="px-6 py-4">{user.userId}</td>
-                                <td className="px-6 py-4">{user.name}</td>
-                                <td className="px-6 py-4">{user.address}</td>
-                                <td className="px-6 py-4">{user.phoneNumber}</td>
+                                <td className="px-6 py-4">{row.userId}</td>
+                                <td className="px-6 py-4">{row.name}</td>
+                                <td className="px-6 py-4">{row.address}</td>
+                                <td className="px-6 py-4">{row.phoneNumber}</td>
                             </tr>
                         );
                     })}
@@ -51,5 +129,5 @@ const UserTable = ({ table }) => {
             </table>
         </div>
     );
-};
+});
 export default UserTable;
