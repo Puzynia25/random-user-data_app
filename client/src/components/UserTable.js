@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 
 const UserTable = ({ table }) => {
-    const [userTable, setUserTable] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        setUserTable(table);
-        if (table) {
-            setLoading(false);
-        }
-    }, [table]);
+    // useEffect(() => {
+    //     setUserTable(table);
+    //     if (table) {
+    //         setLoading(false);
+    //     }
+    // }, [table]);
     return (
         <div className="relative overflow-x-auto mt-16  mx-auto">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 ">
@@ -33,7 +32,7 @@ const UserTable = ({ table }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {userTable?.map((user, i) => {
+                    {table?.map((user, i) => {
                         return (
                             <tr key={user.userId} className="bg-white border-b">
                                 <th

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import RegionInput from "./components/RegionInput";
 import UserTable from "./components/UserTable";
 import { generateRandomSeed, generateUsersData } from "./http/userDataAPI";
 import RangeInput from "./components/RangeInput";
+import ArrowUp from "./components/ArrowUp";
 
 function App() {
     const [errorCount, setErrorCount] = useState(0);
@@ -14,7 +15,20 @@ function App() {
     const [mouseUp, setMouseUp] = useState(false);
     const [countUsers, setCountUsers] = useState(20);
     const [currentPage, setCurrentPage] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(false);
+    const [isSelects, setIsSelects] = useState(false);
+    const [showScrollButton, setShowScrollButton] = useState(false);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
 
     const handleSelectedRegion = (region) => {
         setSelectedRegion(region);
@@ -65,75 +79,37 @@ function App() {
     };
 
     const handleInputSeed = (e) => {
-        setSeedValue(e.target.value);
+        const value = parseFloat(e.target.value);
+        setSeedValue(value);
     };
 
-    // const fetchWithDebounce = useCallback(() => {
-    //     if (isLoading) return;
-
-    //     setIsLoading(true);
-
-    //     let timerId;
-
-    //     return () => {
-    //         // Очистить предыдущий таймер
-    //         if (timerId) {
-    //             clearTimeout(timerId);
-    //         }
-
-    //         // Запустить таймер с задержкой 1 секунда
-    //         timerId = setTimeout(async () => {
-    //             try {
-    //                 const response = await generateUsersData(
-    //                     selectedRegion,
-    //                     countUsers,
-    //                     errorCount,
-    //                     seedValue,
-    //                     currentPage
-    //                 );
-
-    //                 setTable((prevTable) => [...prevTable, ...response.usersData]);
-    //                 setCountUsers(10);
-    //                 setCurrentPage((prev) => prev + 1);
-    //             } catch (e) {
-    //                 console.log(e);
-    //             } finally {
-    //                 setIsLoading(false); // Снимаем состояние загрузки
-    //             }
-    //         }, 1000); // 1 секунда задержки
-    //     };
-    // }, [selectedRegion, errorCount, mouseUp, seedValue]);
-
     useEffect(() => {
-        generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
-            .then((response) => {
-                setTable((prevTable) => [...prevTable, ...response.usersData]);
-                setCountUsers(10);
-                setCurrentPage((prev) => prev + 1);
-                // console.log(currentPage, "setCurrentPage");
-            })
-            .catch((e) => console.log(e))
-            .finally(() => setIsLoading(false));
-    }, [isLoading]);
+        console.log(selectedRegion, countUsers, errorCount, seedValue, currentPage);
 
-    useEffect(() => {
         generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
             .then((response) => {
                 setTable(response.usersData);
-                setCountUsers(10);
-                setCurrentPage((prev) => prev + 1);
+                // setCountUsers(10);
+                // setCurrentPage((prev) => prev + 1);
+                console.log(response.usersData);
             })
             .catch((e) => console.log(e));
     }, [selectedRegion, errorCount, mouseUp, seedValue]);
 
     const handleScroll = (e) => {
         if (
+            !isFetching &&
             e.target.documentElement.scrollHeight -
                 (e.target.documentElement.scrollTop + window.innerHeight) <
-            100
+                100
         ) {
-            // setFetching(true);
-            setIsLoading(true);
+            setIsFetching(true);
+        }
+
+        if (window.scrollY > 200) {
+            setShowScrollButton(true);
+        } else {
+            setShowScrollButton(false);
         }
     };
 
@@ -166,6 +142,7 @@ function App() {
                                         : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                                 }
                                 placeholder="< 1000"
+                                min="0"
                                 value={errorCount}
                                 onChange={handleInputChange}
                             />
@@ -184,10 +161,11 @@ function App() {
                             <div className="relative">
                                 <input
                                     type="number"
-                                    className=" w-48 mb-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                                    className="w-48 mb-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
                                     placeholder="1000"
+                                    min="0"
                                     value={seedValue}
-                                    onChange={(e) => handleInputSeed(e)}
+                                    onChange={handleInputSeed}
                                 />
                                 <i className="absolute right-2 top-0 text-gray-400 text-xs text-left">
                                     per record
@@ -210,6 +188,7 @@ function App() {
             </div>
 
             <UserTable table={table} />
+            {showScrollButton && <ArrowUp scrollToTop={scrollToTop} />}
         </div>
     );
 }

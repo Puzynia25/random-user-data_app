@@ -15,7 +15,7 @@ const RangeInput = ({ sliderValue, handleSliderChange, handleMouseUp }) => {
                     max="10"
                     step="0.25"
                     value={sliderValue}
-                    onChange={(e) => handleSliderChange(e)}
+                    onChange={handleSliderChange}
                     onMouseUp={handleMouseUp}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
