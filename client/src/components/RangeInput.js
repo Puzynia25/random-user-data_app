@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
-const RangeInput = ({ sliderValue, handleSliderChange, handleMouseUp }) => {
-    const [loading, setLoading] = useState(true);
-
+const RangeInput = ({ sliderValue, handleSliderChange }) => {
     return (
         <div className="w-2/3 my-5 text-center mx-auto">
             <div className="relative mb-6">
@@ -16,7 +14,6 @@ const RangeInput = ({ sliderValue, handleSliderChange, handleMouseUp }) => {
                     step="0.25"
                     value={sliderValue}
                     onChange={handleSliderChange}
-                    onMouseUp={handleMouseUp}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
 

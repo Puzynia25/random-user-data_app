@@ -4,19 +4,24 @@ import UserTable from "./components/UserTable";
 import { generateRandomSeed, generateUsersData } from "./http/userDataAPI";
 import RangeInput from "./components/RangeInput";
 import ArrowUp from "./components/ArrowUp";
+import Spinner from "./components/Spinner";
 
 function App() {
+    const initialPage = 0;
+    const initialCountUsers = 20;
+
     const [errorCount, setErrorCount] = useState(0);
     const [sliderValue, setSliderValue] = useState(0);
     const [seedValue, setSeedValue] = useState(0);
     const [validateErrorCount, setValidateErrorCount] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState("EN");
     const [table, setTable] = useState([]);
-    const [currentPage, setCurrentPage] = useState(0);
-    const [countUsers, setCountUsers] = useState(20);
-    const [mouseUp, setMouseUp] = useState(false);
+    const [currentPage, setCurrentPage] = useState(initialPage);
+    const [countUsers, setCountUsers] = useState(initialCountUsers);
     const [isFetching, setIsFetching] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
+    const [timerId, setTimerId] = useState(null);
+    const [isNewRequest, setIsNewRequest] = useState(false);
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -64,10 +69,6 @@ function App() {
         setErrorCount(value);
     };
 
-    const handleMouseUp = () => {
-        setMouseUp(!mouseUp);
-    };
-
     const handleSeedChange = async () => {
         try {
             const response = await generateRandomSeed();
@@ -82,56 +83,39 @@ function App() {
         setSeedValue(value);
     };
 
-    let timerId;
-    // const fetchData = async () => {
-    //     console.log("fetching", selectedRegion);
-    //     if (timerId) {
-    //         clearTimeout(timerId);
-    //     }
+    // let timerId;
+    const fetchData = async () => {
+        if (timerId) {
+            clearTimeout(timerId);
+        }
 
-    //     timerId = setTimeout(async () => {
-    //         console.log(selectedRegion, countUsers, errorCount, seedValue, currentPage);
+        console.log(timerId);
 
-    //         try {
-    //             const response = await generateUsersData(
-    //                 selectedRegion,
-    //                 countUsers,
-    //                 errorCount,
-    //                 seedValue,
-    //                 currentPage
-    //             );
+        const timer = () => {
+            return setTimeout(async () => {
+                setTimerId(null);
+                if (isNewRequest) {
+                    generateUsersData(selectedRegion, countUsers, errorCount, seedValue, 0)
+                        .then((response) => {
+                            setTable(response.usersData);
+                            setCountUsers(10);
+                            setCurrentPage(1);
+                        })
+                        .catch((e) => console.log(e))
+                        .finally(() => setIsNewRequest(false));
+                }
+            }, 1000);
+        };
 
-    //             if (isSelects) {
-    //                 setTable(response.usersData);
-    //             } else {
-    //                 setTable((prevTable) => [...prevTable, ...response.usersData]);
-    //             }
-
-    //             setCountUsers(10);
-    //             setCurrentPage((prev) => prev + 1);
-    //         } catch (error) {
-    //             console.error("Ошибка запроса:", error);
-    //         } finally {
-    //             setIsFetching(false);
-    //             setIsSelects(false);
-    //         }
-    //     }, 1000);
-    // };
-
-    // useEffect(() => {
-    //     if (isFetching) {
-    //         fetchData();
-    //     }
-    // }, [isFetching]);
+        setTimerId(timer());
+    };
 
     useEffect(() => {
         if (isFetching) {
             generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
                 .then((response) => {
                     setTable((prevTable) => [...prevTable, ...response.usersData]);
-                    setCountUsers(10);
                     setCurrentPage((prev) => prev + 1);
-                    // console.log(currentPage, "setCurrentPage");
                 })
                 .catch((e) => console.log(e))
                 .finally(() => setIsFetching(false));
@@ -139,14 +123,22 @@ function App() {
     }, [isFetching]);
 
     useEffect(() => {
-        generateUsersData(selectedRegion, countUsers, errorCount, seedValue, 0)
+        if (timerId) {
+            setIsNewRequest(true);
+            fetchData();
+            return;
+        }
+
+        fetchData();
+
+        generateUsersData(selectedRegion, initialCountUsers, errorCount, seedValue, initialPage)
             .then((response) => {
                 setTable(response.usersData);
                 setCountUsers(10);
                 setCurrentPage(1);
             })
             .catch((e) => console.log(e));
-    }, [selectedRegion, errorCount, mouseUp, seedValue]);
+    }, [selectedRegion, errorCount, seedValue]);
 
     const handleScroll = (e) => {
         if (
@@ -173,6 +165,7 @@ function App() {
         };
     }, []);
 
+    const spinner = isFetching ? <Spinner /> : null;
     return (
         <div className="container mx-auto mt-10 w-full">
             <div>
@@ -232,15 +225,12 @@ function App() {
                         </div>
                     </div>
                 </div>
-                <RangeInput
-                    sliderValue={sliderValue}
-                    handleSliderChange={handleSliderChange}
-                    handleMouseUp={handleMouseUp}
-                />
+                <RangeInput sliderValue={sliderValue} handleSliderChange={handleSliderChange} />
             </div>
 
             <UserTable table={table} />
             {showScrollButton && <ArrowUp scrollToTop={scrollToTop} />}
+            {spinner}
         </div>
     );
 }
