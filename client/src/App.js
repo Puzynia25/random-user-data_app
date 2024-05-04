@@ -12,11 +12,10 @@ function App() {
     const [validateErrorCount, setValidateErrorCount] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState("EN");
     const [table, setTable] = useState([]);
-    const [mouseUp, setMouseUp] = useState(false);
-    const [countUsers, setCountUsers] = useState(20);
     const [currentPage, setCurrentPage] = useState(0);
+    const [countUsers, setCountUsers] = useState(20);
+    const [mouseUp, setMouseUp] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
-    const [isSelects, setIsSelects] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
 
     const scrollToTop = () => {
@@ -83,15 +82,68 @@ function App() {
         setSeedValue(value);
     };
 
-    useEffect(() => {
-        console.log(selectedRegion, countUsers, errorCount, seedValue, currentPage);
+    let timerId;
+    // const fetchData = async () => {
+    //     console.log("fetching", selectedRegion);
+    //     if (timerId) {
+    //         clearTimeout(timerId);
+    //     }
 
-        generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
+    //     timerId = setTimeout(async () => {
+    //         console.log(selectedRegion, countUsers, errorCount, seedValue, currentPage);
+
+    //         try {
+    //             const response = await generateUsersData(
+    //                 selectedRegion,
+    //                 countUsers,
+    //                 errorCount,
+    //                 seedValue,
+    //                 currentPage
+    //             );
+
+    //             if (isSelects) {
+    //                 setTable(response.usersData);
+    //             } else {
+    //                 setTable((prevTable) => [...prevTable, ...response.usersData]);
+    //             }
+
+    //             setCountUsers(10);
+    //             setCurrentPage((prev) => prev + 1);
+    //         } catch (error) {
+    //             console.error("Ошибка запроса:", error);
+    //         } finally {
+    //             setIsFetching(false);
+    //             setIsSelects(false);
+    //         }
+    //     }, 1000);
+    // };
+
+    // useEffect(() => {
+    //     if (isFetching) {
+    //         fetchData();
+    //     }
+    // }, [isFetching]);
+
+    useEffect(() => {
+        if (isFetching) {
+            generateUsersData(selectedRegion, countUsers, errorCount, seedValue, currentPage)
+                .then((response) => {
+                    setTable((prevTable) => [...prevTable, ...response.usersData]);
+                    setCountUsers(10);
+                    setCurrentPage((prev) => prev + 1);
+                    // console.log(currentPage, "setCurrentPage");
+                })
+                .catch((e) => console.log(e))
+                .finally(() => setIsFetching(false));
+        }
+    }, [isFetching]);
+
+    useEffect(() => {
+        generateUsersData(selectedRegion, countUsers, errorCount, seedValue, 0)
             .then((response) => {
                 setTable(response.usersData);
-                // setCountUsers(10);
-                // setCurrentPage((prev) => prev + 1);
-                console.log(response.usersData);
+                setCountUsers(10);
+                setCurrentPage(1);
             })
             .catch((e) => console.log(e));
     }, [selectedRegion, errorCount, mouseUp, seedValue]);
