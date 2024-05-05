@@ -1,20 +1,10 @@
-const {
-    fakerPL,
-    fakerDE,
-    fakerEN_US,
-    fakerIT,
-    fakerEN_AU,
-    fakerEN_GB,
-    fakerEN_CA,
-} = require("@faker-js/faker");
+const { fakerPL, fakerDE, fakerEN_US, fakerIT } = require("@faker-js/faker");
 const ApiError = require("../error/ApiError");
 const seedrandom = require("seedrandom");
-const winston = require("winston");
 
 class userDataController {
     generateRandomSeed(req, res) {
         const seed = fakerPL.seed();
-
         res.json({ seed: seed });
     }
 
@@ -87,9 +77,7 @@ class userDataController {
                     address = `${faker.location.county()}, ${faker.location.city()}, ${faker.location.streetAddress()}, House ${faker.location.buildingNumber()}}`;
                     break;
             }
-
             address += `, ZIP Code ${faker.location.zipCode()}`;
-
             return address;
         }
 
@@ -198,11 +186,9 @@ class userDataController {
         }
 
         const faker = getFakerForRegion(region);
-
         faker.seed(seed + page);
 
         let currentUser = 0;
-
         const usersData = faker.helpers.multiple(createRandomUser, {
             count: countUsers,
         });
