@@ -1,5 +1,5 @@
-const url = "http://localhost:9000/api";
-// const url = "https://random-user-data-app.onrender.com";
+// const url = "http://localhost:9000/api";
+const url = "https://random-user-data-app.onrender.com";
 
 export const generateRandomSeed = async () => {
     try {

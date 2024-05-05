@@ -88,7 +88,7 @@ const UserTable = observer(() => {
     }, [user.selectedRegion, user.errorValue, user.seedValue]);
 
     return (
-        <div className="relative overflow-x-auto mt-16  mx-auto">
+        <div className="relative overflow-x-auto mt-2  mx-auto">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 ">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>

@@ -58,12 +58,12 @@ const SelectMenu = observer(() => {
         const value = parseFloat(e.target.value);
         user.setSeedValue(value);
     };
+
     return (
         <div>
             <div className="flex content-between gap-20 justify-center w-full">
                 <RegionInput />
-
-                <div>
+                <div className=" place-content-center">
                     <label
                         htmlFor="text-input"
                         className="block mb-2 text-sm font-medium text-gray-900">
@@ -74,8 +74,8 @@ const SelectMenu = observer(() => {
                             type="number"
                             className={
                                 validateErrorCount
-                                    ? "bg-red-300 border border-red-300 text-gray-900 text-sm rounded-lg focus:bg-red-100 focus:ring-red-500 focus:border-red-100 block w-full p-2.5"
-                                    : "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                    ? " bg-red-300 border border-red-300 text-gray-900 text-sm rounded-lg focus:bg-red-100 focus:ring-red-500 focus:border-red-100 block w-full p-2.5"
+                                    : " bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                             }
                             placeholder="< 1000"
                             min="0"
@@ -116,6 +116,7 @@ const SelectMenu = observer(() => {
                     </div>
                 </div>
             </div>
+
             <RangeInput sliderValue={sliderValue} handleSliderChange={handleSliderChange} />
         </div>
     );

@@ -5,6 +5,7 @@ import Spinner from "./components/Spinner";
 import SelectMenu from "./components/SelectMenu";
 import { Context } from ".";
 import { observer } from "mobx-react-lite";
+import ExportCsvButton from "./components/ExportCsvButton";
 
 const App = observer(() => {
     const { user } = useContext(Context);
@@ -50,6 +51,7 @@ const App = observer(() => {
     return (
         <div className="container mx-auto mt-10 w-full">
             <SelectMenu />
+            <ExportCsvButton />
             <UserTable />
             {showScrollButton && <ArrowUp scrollToTop={scrollToTop} />}
             {spinner}
